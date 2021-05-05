@@ -295,9 +295,10 @@ class ContactDetails extends PureComponent<
       this.props.ErrorSending( null )
     }
 
-    if( this.contactsType == 'I\'m Keeper of' && this.props.trustedContacts.tc.trustedContacts[ this.ContactName ].contactsWalletName && this.props.UNDER_CUSTODY[ this.props.trustedContacts.tc.trustedContacts[ this.ContactName ].contactsWalletName ] && this.props.UNDER_CUSTODY[ this.props.trustedContacts.tc.trustedContacts[ this.ContactName ].contactsWalletName ].SECONDARY_SHARE && this.props.UNDER_CUSTODY[ this.props.trustedContacts.tc.trustedContacts[ this.ContactName ].contactsWalletName ].SECONDARY_SHARE.shareId ){
+    if( this.contactsType == 'I\'m Keeper of' && this.props.trustedContacts.tc.trustedContacts[ this.ContactName ].contactsWalletName && this.props.UNDER_CUSTODY[ this.props.trustedContacts.tc.trustedContacts[ this.ContactName ].contactsWalletName ] ){
+      const underCustodyVar = this.props.UNDER_CUSTODY[ this.props.trustedContacts.tc.trustedContacts[ this.ContactName ].contactsWalletName ]
       this.setState( {
-        isSmSharePresent: true
+        isSmSharePresent: underCustodyVar.SECONDARY_SHARE.shareId ? true : underCustodyVar.META_SHARE.encryptedShare && underCustodyVar.META_SHARE.encryptedShare.smShare ? true : false
       } )
     }
     this.updateContactDetailsUI()

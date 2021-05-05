@@ -107,8 +107,13 @@ export interface Transactions {
 }
 
 export interface MetaShare {
-  encryptedSecret: string;
   shareId: string;
+  encryptedSecret: string;
+  encryptedShare?: {
+    pmShare: string;
+    smShare: string;
+    bhXpub: string;
+  };
   meta: {
     version: string;
     validator: string;
@@ -117,7 +122,7 @@ export interface MetaShare {
     tag: string;
     timestamp: string;
     reshareVersion: number;
-    questionId: string;
+    questionId?: string;
     question?: string;
     guardian?: string;
     encryptedKeeperInfo?: string;

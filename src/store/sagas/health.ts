@@ -187,17 +187,21 @@ function* generateMetaSharesWorker( { payload } ) {
   const { walletName } = yield select(
     ( state ) => state.storage.database.WALLET_SETUP
   )
+  const secureAccount: SecureAccount = yield select(
+    ( state ) => state.accounts[ SECURE_ACCOUNT ].service,
+  )
   const appVersion = DeviceInfo.getVersion()
-  const { level, isUpgrade } = payload
+  const { level, SM, isUpgrade } = payload
   const { answer, questionId, question } = yield select(
     ( state ) => state.storage.database.WALLET_SETUP.security
   )
+  const secondaryMnemonic = SM && SM ? SM : secureAccount.secureHDWallet.secondaryMnemonic ? secureAccount.secureHDWallet.secondaryMnemonic : ''
 
   const secureAssets = {
-    secondaryMnemonic: '',
+    secondaryMnemonic: secondaryMnemonic,
     twoFASecret: '',
     secondaryXpub: '',
-    bhXpub: '',
+    bhXpub: secureAccount.secureHDWallet.xpubs.bh,
   }
 
   let serviceCall = null
@@ -3247,16 +3251,22 @@ function* uploadRequestedSMShareWorker( { payload } ) {
       // Alert.alert('Upload failed!', 'No share under custody for this wallet.');
     }
 
-    const { META_SHARE, ENC_DYNAMIC_NONPMDD, TRANSFER_DETAILS, SECONDARY_SHARE } = UNDER_CUSTODY[ tag ]
+    const { META_SHARE, ENC_DYNAMIC_NONPMDD, SECONDARY_SHARE } = UNDER_CUSTODY[ tag ]
 
     // TODO: 10 min removal strategy
     yield put( switchS3LoaderKeeper( 'uploadRequestedShare' ) )
-
+    const secondaryShare: MetaShare = SECONDARY_SHARE.shareId ? SECONDARY_SHARE : META_SHARE.encryptedShare && META_SHARE.encryptedShare.smShare ? {
+      ...META_SHARE, encryptedShare:{
+        ...META_SHARE.encryptedShare, pmShare:'', bhXpub: ''
+      }
+    } : {
+    }
+    console.log( 'secondaryShare', secondaryShare )
     const res = yield call(
       S3Service.uploadRequestedSMShare,
       encryptedKey,
       otp,
-      SECONDARY_SHARE,
+      secondaryShare,
       ENC_DYNAMIC_NONPMDD,
     )
 
