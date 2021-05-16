@@ -42,8 +42,8 @@
   },
   "dependencies": {
     "@gorhom/bottom-sheet": "^1.4.1",
-    "@react-native-clipboard/clipboard": "^1.7.0",
     "@react-native-async-storage/async-storage": "^1.15.4",
+    "@react-native-clipboard/clipboard": "^1.7.0",
     "@react-native-community/masked-view": "^0.1.10",
     "@react-native-community/netinfo": "^5.9.5",
     "@react-native-community/push-notification-ios": "^1.8.0",
@@ -78,6 +78,7 @@
     "expo-contacts": "^8.6.0",
     "expo-secure-store": "^9.2.0",
     "expo-sqlite": "^8.4.0",
+    "hermes-engine": "^0.5.2-rc1",
     "https-browserify": "0.0.1",
     "icepick": "^2.4.0",
     "idx": "^2.5.6",

@@ -7,7 +7,7 @@ apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.grad
 apply from: '../../node_modules/react-native-unimodules/gradle.groovy'
 
 project.ext.react = [
-    enableHermes: false,
+    enableHermes: true,
 ]
 
 apply from: '../../node_modules/react-native-unimodules/gradle.groovy'
@@ -89,7 +89,7 @@ android {
         release {
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
-            // signingConfig signingConfigs.release
+            signingConfig signingConfigs.release
         }
     }
     productFlavors {
@@ -148,14 +148,10 @@ dependencies {
     implementation "androidx.appcompat:appcompat:1.1.0"
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.0.0"
     if (enableHermes) {
-        def hermesPath = "../../node_modules/hermes-engine/android/";
-        debugImplementation files(hermesPath + "hermes-debug.aar")
-        releaseImplementation files(hermesPath + "hermes-release.aar")
+        implementation files("../../node_modules/hermes-engine/android/hermes-release.aar")
     } else {
         implementation jscFlavor
     }
-
-
 
     implementation project(':react-native-linear-gradient')
     implementation project(':react-native-fs')
