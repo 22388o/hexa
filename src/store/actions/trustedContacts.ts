@@ -7,6 +7,7 @@ import { ServicesJSON } from '../../common/interfaces/Interfaces'
 
 export const SYNC_PERMANENT_CHANNELS = 'SYNC_PERMANENT_CHANNELS'
 export const INITIALIZE_TRUSTED_CONTACT = 'INITIALIZE_TRUSTED_CONTACT'
+export const EDIT_TRUSTED_CONTACT = 'EDIT_TRUSTED_CONTACT'
 export const REJECT_TRUSTED_CONTACT = 'REJECT_TRUSTED_CONTACT'
 export const REMOVE_TRUSTED_CONTACT = 'REMOVE_TRUSTED_CONTACT'
 export const WALLET_CHECK_IN = 'WALLET_CHECK_IN'
@@ -26,17 +27,17 @@ export const syncPermanentChannels = (
     updatedSERVICES, // service(db)-component to be jointly inserted into database
     shouldNotUpdateSERVICES, // skip database update
   }:
-  {
-    permanentChannelsSyncKind: PermanentChannelsSyncKind,
-    channelUpdates?: {
-    contactInfo: ContactInfo,
-    streamUpdates?: UnecryptedStreamData,
-  }[],
-  metaSync?: boolean,
-  hardSync?: boolean,
-  updatedSERVICES?: ServicesJSON,
-  shouldNotUpdateSERVICES?: boolean
-}
+    {
+      permanentChannelsSyncKind: PermanentChannelsSyncKind,
+      channelUpdates?: {
+        contactInfo: ContactInfo,
+        streamUpdates?: UnecryptedStreamData,
+      }[],
+      metaSync?: boolean,
+      hardSync?: boolean,
+      updatedSERVICES?: ServicesJSON,
+      shouldNotUpdateSERVICES?: boolean
+    }
 ) => {
   return {
     type: SYNC_PERMANENT_CHANNELS,
@@ -65,14 +66,14 @@ export const initializeTrustedContact = (
     channelKey,
     contactsSecondaryChannelKey,
     shareId,
-  }:{
-      contact: any,
-      flowKind: InitTrustedContactFlowKind,
-      isKeeper?: boolean,
-      channelKey?: string,
-      contactsSecondaryChannelKey?: string,
-      shareId?: string
-    },
+  }: {
+    contact: any,
+    flowKind: InitTrustedContactFlowKind,
+    isKeeper?: boolean,
+    channelKey?: string,
+    contactsSecondaryChannelKey?: string,
+    shareId?: string
+  },
 ) => {
   return {
     type: INITIALIZE_TRUSTED_CONTACT,
@@ -87,7 +88,37 @@ export const initializeTrustedContact = (
   }
 }
 
-export const rejectTrustedContact = ( { channelKey } : {channelKey: string} ) => {
+export const editTrustedContact = (
+  {
+    contact,
+    flowKind,
+    isKeeper,
+    channelKey,
+    contactsSecondaryChannelKey,
+    shareId,
+  }: {
+    contact: any,
+    flowKind: InitTrustedContactFlowKind,
+    isKeeper?: boolean,
+    channelKey?: string,
+    contactsSecondaryChannelKey?: string,
+    shareId?: string
+  },
+) => {
+  return {
+    type: EDIT_TRUSTED_CONTACT,
+    payload: {
+      contact,
+      flowKind,
+      isKeeper,
+      channelKey,
+      contactsSecondaryChannelKey,
+      shareId,
+    },
+  }
+}
+
+export const rejectTrustedContact = ({ channelKey }: { channelKey: string }) => {
   return {
     type: REJECT_TRUSTED_CONTACT,
     payload: {
@@ -96,7 +127,7 @@ export const rejectTrustedContact = ( { channelKey } : {channelKey: string} ) =>
   }
 }
 
-export const removeTrustedContact = ( { channelKey } : {channelKey: string} ) => {
+export const removeTrustedContact = ({ channelKey }: { channelKey: string }) => {
   return {
     type: REMOVE_TRUSTED_CONTACT,
     payload: {
@@ -105,7 +136,7 @@ export const removeTrustedContact = ( { channelKey } : {channelKey: string} ) =>
   }
 }
 
-export const walletCheckIn = ( currencyCode?: string ) => {
+export const walletCheckIn = (currencyCode?: string) => {
   return {
     type: WALLET_CHECK_IN,
     payload: {
@@ -117,7 +148,7 @@ export const walletCheckIn = ( currencyCode?: string ) => {
 // types and action creators: dispatched by sagas
 export const EXISTING_PERMANENT_CHANNELS_SYNCHED = 'EXISTING_PERMANENT_CHANNELS_SYNCHED'
 
-export const existingPermanentChannelsSynched = ( { successful }: {successful: boolean} ) => {
+export const existingPermanentChannelsSynched = ({ successful }: { successful: boolean }) => {
   return {
     type: EXISTING_PERMANENT_CHANNELS_SYNCHED,
     payload: {

@@ -27,7 +27,7 @@ import upgradeToNewBhr from './reducers/upgradeToNewBhr'
 const config = {
   key: 'root', // key is required
   storage: AsyncStorage, // storage is now required
-  blacklist: [ 'setupAndAuth', 'loaders' ],
+  blacklist: ['setupAndAuth', 'loaders'],
 }
 
 import {
@@ -114,6 +114,7 @@ import {
   walletCheckInWatcher,
   syncPermanentChannelsWatcher,
   initializeTrustedContactWatcher,
+  editTrustedContactWatcher,
   rejectTrustedContactWatcher,
 } from './sagas/trustedContacts'
 
@@ -277,6 +278,7 @@ const rootSaga = function* () {
 
     // Trusted Contacts
     initializeTrustedContactWatcher,
+    editTrustedContactWatcher,
     rejectTrustedContactWatcher,
     removeTrustedContactWatcher,
     walletCheckInWatcher,
@@ -363,22 +365,22 @@ const rootSaga = function* () {
   ]
 
   yield all(
-    sagas.map( ( saga ) =>
-      spawn( function* () {
-        while ( true ) {
+    sagas.map((saga) =>
+      spawn(function* () {
+        while (true) {
           try {
-            yield call( saga )
+            yield call(saga)
             break
-          } catch ( e ) {
-            console.log( e )
+          } catch (e) {
+            console.log(e)
           }
         }
-      } )
+      })
     )
   )
 }
 
-const rootReducer = combineReducers( {
+const rootReducer = combineReducers({
   storage: storageReducer,
   setupAndAuth: setupAndAuthReducer,
   accounts: accountsReducer,
@@ -398,19 +400,19 @@ const rootReducer = combineReducers( {
   cloud: cloudReducer,
   upgradeToNewBhr: upgradeToNewBhr,
   newBHR: newBHR
-} )
+})
 
 export default function makeStore() {
   const sagaMiddleware = createSagaMiddleware()
-  const reducers = persistReducer( config, rootReducer )
+  const reducers = persistReducer(config, rootReducer)
   const storeMiddleware = composeWithDevTools(
-    applyMiddleware( sagaMiddleware, thunk )
+    applyMiddleware(sagaMiddleware, thunk)
   )
 
-  const store = createStore( reducers, storeMiddleware )
+  const store = createStore(reducers, storeMiddleware)
 
-  persistStore( store )
-  sagaMiddleware.run( rootSaga )
+  persistStore(store)
+  sagaMiddleware.run(rootSaga)
 
   return store
 }

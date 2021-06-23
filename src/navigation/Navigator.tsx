@@ -86,6 +86,7 @@ import TrustedContactHistoryNewBHR from '../pages/NewBHR/TrustedContactHistoryKe
 // import PersonalCopyHistoryKeeper from '../pages/Keeper/PersonalCopyHistory';
 import PersonalCopyHistoryNewBHR from '../pages/NewBHR/PersonalCopyHistory'
 import CloudBackupHistory from '../pages/NewBHR/CloudBackupHistory'
+import EditContacts from '../pages/Contacts/EditContact'
 
 const SetupNavigator = createStackNavigator(
   {
@@ -117,9 +118,9 @@ const SetupNavigator = createStackNavigator(
   {
     initialRouteName: 'Launch',
     headerLayoutPreset: 'center',
-    defaultNavigationOptions: () => ( {
+    defaultNavigationOptions: () => ({
       header: null,
-    } ),
+    }),
   },
 )
 
@@ -230,10 +231,14 @@ const HomeNavigator = createStackNavigator(
         title: 'Wyre Home'
       }
     },
+    EditContacts: {
+      screen: EditContacts,
+
+    }
   },
   {
     headerLayoutPreset: 'center',
-    defaultNavigationOptions: ( { navigation } ) => {
+    defaultNavigationOptions: ({ navigation }) => {
       return {
         header: null,
         headerTitleContainerStyle: {
@@ -242,15 +247,15 @@ const HomeNavigator = createStackNavigator(
         },
       }
     },
-    transitionConfig: ( transitionProps, prevTransitionProps ) => {
+    transitionConfig: (transitionProps, prevTransitionProps) => {
 
       // 📝 Override the default presentation mode for screens that we
       // want to present modally
       const isModal = MODAL_ROUTES.some(
-        ( screenName ) =>
+        (screenName) =>
           screenName === transitionProps.scene.route.routeName ||
-          ( prevTransitionProps &&
-            screenName === prevTransitionProps.scene.route.routeName ),
+          (prevTransitionProps &&
+            screenName === prevTransitionProps.scene.route.routeName),
       )
 
       return StackViewTransitionConfigs.defaultTransitionConfig(
@@ -262,16 +267,16 @@ const HomeNavigator = createStackNavigator(
   },
 )
 
-const Navigator = createSwitchNavigator( {
+const Navigator = createSwitchNavigator({
   SetupNav: SetupNavigator,
   HomeNav: HomeNavigator,
-} )
+})
 
 
 export type BaseNavigationProp = {
-  getParam: ( param: string ) => any;
-  setParams: ( params: Record<string, unknown> ) => void;
-  navigate: ( route: string, params?: Record<string, unknown> ) => void;
+  getParam: (param: string) => any;
+  setParams: (params: Record<string, unknown>) => void;
+  navigate: (route: string, params?: Record<string, unknown>) => void;
 } & Record<string, unknown>;
 
-export default createAppContainer( Navigator )
+export default createAppContainer(Navigator)

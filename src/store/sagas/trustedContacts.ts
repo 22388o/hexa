@@ -9,6 +9,7 @@ import {
   InitTrustedContactFlowKind,
   PermanentChannelsSyncKind,
   REJECT_TRUSTED_CONTACT,
+  EDIT_TRUSTED_CONTACT,
 } from '../actions/trustedContacts'
 import { createWatcher } from '../utils/utilities'
 import TrustedContactsService from '../../bitcoin/services/TrustedContactsService'
@@ -49,12 +50,12 @@ import { ServicesJSON } from '../../common/interfaces/Interfaces'
 import useStreamFromContact from '../../utils/hooks/trusted-contacts/UseStreamFromContact'
 import RelayServices from '../../bitcoin/services/RelayService'
 
-export function* createTrustedContactSubAccount ( secondarySubAccount: TrustedContactsSubAccountInfo, parentShell: AccountShell, contactInfo: ContactInfo ) {
-  const accountsState: AccountsState = yield select( state => state.accounts )
-  const regularAccount: RegularAccount = accountsState[ REGULAR_ACCOUNT ].service
-  const testAccount: TestAccount = accountsState[ TEST_ACCOUNT ].service
-  const { walletName } = yield select( ( state ) => state.storage.database.WALLET_SETUP )
-  const FCM = yield select ( state => state.preferences.fcmTokenValue )
+export function* createTrustedContactSubAccount(secondarySubAccount: TrustedContactsSubAccountInfo, parentShell: AccountShell, contactInfo: ContactInfo) {
+  const accountsState: AccountsState = yield select(state => state.accounts)
+  const regularAccount: RegularAccount = accountsState[REGULAR_ACCOUNT].service
+  const testAccount: TestAccount = accountsState[TEST_ACCOUNT].service
+  const { walletName } = yield select((state) => state.storage.database.WALLET_SETUP)
+  const FCM = yield select(state => state.preferences.fcmTokenValue)
   const { contactDetails } = contactInfo
   const { walletId } = regularAccount.hdWallet.getWalletId()
 
@@ -65,12 +66,12 @@ export function* createTrustedContactSubAccount ( secondarySubAccount: TrustedCo
     contactDetails,
     contactInfo.channelKey,
   )
-  if ( res.status !== 200 ) throw new Error( `${res.err}` )
+  if (res.status !== 200) throw new Error(`${res.err}`)
 
-  const { SERVICES } = yield select( ( state ) => state.storage.database )
+  const { SERVICES } = yield select((state) => state.storage.database)
   const updatedSERVICES = {
     ...SERVICES,
-    REGULAR_ACCOUNT: JSON.stringify( regularAccount ),
+    REGULAR_ACCOUNT: JSON.stringify(regularAccount),
   }
 
   // refresh the account number
@@ -90,14 +91,14 @@ export function* createTrustedContactSubAccount ( secondarySubAccount: TrustedCo
     secondarySubAccount,
   )
 
-  const trustedDerivativeAccount = ( regularAccount.hdWallet
-    .derivativeAccounts[ TRUSTED_CONTACTS ][
-      accountNumber
-    ] as TrustedContactDerivativeAccountElements )
+  const trustedDerivativeAccount = (regularAccount.hdWallet
+    .derivativeAccounts[TRUSTED_CONTACTS][
+    accountNumber
+  ] as TrustedContactDerivativeAccountElements)
   const paymentAddress = trustedDerivativeAccount.receivingAddress
   const paymentAddresses = {
-    [ SubAccountKind.TRUSTED_CONTACTS ]: paymentAddress,
-    [ SubAccountKind.TEST_ACCOUNT ]: testAccount.hdWallet.receivingAddress
+    [SubAccountKind.TRUSTED_CONTACTS]: paymentAddress,
+    [SubAccountKind.TEST_ACCOUNT]: testAccount.hdWallet.receivingAddress
   }
   const primaryData: PrimaryStreamData = {
     walletID: walletId,
@@ -110,8 +111,8 @@ export function* createTrustedContactSubAccount ( secondarySubAccount: TrustedCo
 
   let secondaryData: SecondaryStreamData
   let backupData: BackupStreamData
-  const channelAssets = idx( contactInfo, ( _ ) => _.channelAssets )
-  if( contactInfo.isKeeper && channelAssets ){
+  const channelAssets = idx(contactInfo, (_) => _.channelAssets)
+  if (contactInfo.isKeeper && channelAssets) {
     const { primaryMnemonicShard, keeperInfo, secondaryMnemonicShard, bhXpub } = channelAssets
     backupData = {
       primaryMnemonicShard,
@@ -121,18 +122,18 @@ export function* createTrustedContactSubAccount ( secondarySubAccount: TrustedCo
       secondaryMnemonicShard,
       bhXpub,
     }
-    const secondaryChannelKey = SSS.generateKey( config.CIPHER_SPEC.keyLength )
+    const secondaryChannelKey = SSS.generateKey(config.CIPHER_SPEC.keyLength)
     contactInfo.secondaryChannelKey = secondaryChannelKey
   }
   contactInfo.channelKey = trustedDerivativeAccount.channelKey
 
   const streamUpdates: UnecryptedStreamData = {
-    streamId: TrustedContacts.getStreamId( walletId ),
+    streamId: TrustedContacts.getStreamId(walletId),
     primaryData,
     secondaryData,
     backupData,
     metaData: {
-      flags:{
+      flags: {
         active: true,
         newData: true,
         lastSeen: Date.now(),
@@ -142,26 +143,26 @@ export function* createTrustedContactSubAccount ( secondarySubAccount: TrustedCo
   }
 
   // initiate permanent channel
-  const channelUpdate =  {
+  const channelUpdate = {
     contactInfo, streamUpdates
   }
-  yield put( syncPermanentChannels( {
+  yield put(syncPermanentChannels({
     permanentChannelsSyncKind: PermanentChannelsSyncKind.SUPPLIED_CONTACTS,
-    channelUpdates: [ channelUpdate ],
+    channelUpdates: [channelUpdate],
     updatedSERVICES
-  } ) )
+  }))
 }
 
-function* syncPermanentChannelsWorker( { payload }: {payload: { permanentChannelsSyncKind: PermanentChannelsSyncKind, channelUpdates?: { contactInfo: ContactInfo, streamUpdates?: UnecryptedStreamData }[], metaSync?: boolean, hardSync?: boolean, updatedSERVICES?: ServicesJSON, shouldNotUpdateSERVICES?: boolean }} ) {
+function* syncPermanentChannelsWorker({ payload }: { payload: { permanentChannelsSyncKind: PermanentChannelsSyncKind, channelUpdates?: { contactInfo: ContactInfo, streamUpdates?: UnecryptedStreamData }[], metaSync?: boolean, hardSync?: boolean, updatedSERVICES?: ServicesJSON, shouldNotUpdateSERVICES?: boolean } }) {
   const trustedContacts: TrustedContactsService = yield select(
-    ( state ) => state.trustedContacts.service,
+    (state) => state.trustedContacts.service,
   )
-  const accountsState: AccountsState = yield select( state => state.accounts )
-  const regularAccount: RegularAccount = accountsState[ REGULAR_ACCOUNT ].service
+  const accountsState: AccountsState = yield select(state => state.accounts)
+  const regularAccount: RegularAccount = accountsState[REGULAR_ACCOUNT].service
 
   const existingContacts = trustedContacts.tc.trustedContacts
   const { walletId } = regularAccount.hdWallet.getWalletId()
-  const streamId = TrustedContacts.getStreamId( walletId )
+  const streamId = TrustedContacts.getStreamId(walletId)
 
   const channelSyncUpdates: {
     channelKey: string,
@@ -177,72 +178,72 @@ function* syncPermanentChannelsWorker( { payload }: {payload: { permanentChannel
 
   const { permanentChannelsSyncKind, channelUpdates, metaSync, hardSync } = payload
 
-  switch( permanentChannelsSyncKind ){
-      case PermanentChannelsSyncKind.SUPPLIED_CONTACTS:
-        if( !channelUpdates.length ) throw new Error( 'Sync permanent channels failed: supplied channel updates missing' )
-        for( const { contactInfo, streamUpdates } of channelUpdates ){
-          const contact = trustedContacts.tc.trustedContacts[ contactInfo.channelKey ]
-          if( contact )
-            if( !contact.isActive || ( !streamUpdates && !contact.hasNewData && !hardSync ) )
-              continue
+  switch (permanentChannelsSyncKind) {
+    case PermanentChannelsSyncKind.SUPPLIED_CONTACTS:
+      if (!channelUpdates.length) throw new Error('Sync permanent channels failed: supplied channel updates missing')
+      for (const { contactInfo, streamUpdates } of channelUpdates) {
+        const contact = trustedContacts.tc.trustedContacts[contactInfo.channelKey]
+        if (contact)
+          if (!contact.isActive || (!streamUpdates && !contact.hasNewData && !hardSync))
+            continue
 
-          channelSyncUpdates.push( {
-            contactDetails: contactInfo.contactDetails,
-            channelKey: contactInfo.channelKey,
-            streamId: streamId,
-            secondaryChannelKey: contactInfo.secondaryChannelKey,
-            unEncryptedOutstreamUpdates: streamUpdates,
-            contactsSecondaryChannelKey: contactInfo.contactsSecondaryChannelKey,
-            metaSync
-          } )
-          flowKind = contactInfo.flowKind
-          contactIdentifier = contactInfo.channelKey
-        }
-        break
+        channelSyncUpdates.push({
+          contactDetails: contactInfo.contactDetails,
+          channelKey: contactInfo.channelKey,
+          streamId: streamId,
+          secondaryChannelKey: contactInfo.secondaryChannelKey,
+          unEncryptedOutstreamUpdates: streamUpdates,
+          contactsSecondaryChannelKey: contactInfo.contactsSecondaryChannelKey,
+          metaSync
+        })
+        flowKind = contactInfo.flowKind
+        contactIdentifier = contactInfo.channelKey
+      }
+      break
 
-      case PermanentChannelsSyncKind.EXISTING_CONTACTS:
-        if( !Object.keys( existingContacts ).length ) {
-          yield put ( existingPermanentChannelsSynched( {
-            successful: true
-          } ) )
-          return
-        }
+    case PermanentChannelsSyncKind.EXISTING_CONTACTS:
+      if (!Object.keys(existingContacts).length) {
+        yield put(existingPermanentChannelsSynched({
+          successful: true
+        }))
+        return
+      }
 
-        Object.keys( existingContacts ).forEach( channelKey => {
-          const contact: TrustedContact = existingContacts[ channelKey ]
-          if( contact.isActive ){
-            if( metaSync || contact.hasNewData || hardSync )
-              channelSyncUpdates.push( {
-                channelKey: channelKey,
-                streamId,
-                metaSync
-              } )
-          }
-        } )
-        break
-
-      case PermanentChannelsSyncKind.NON_FINALIZED_CONTACTS:
-        if( !Object.keys( existingContacts ).length ) {
-          yield put ( existingPermanentChannelsSynched( {
-            successful: true
-          } ) )
-          return
-        }
-
-        Object.keys( existingContacts ).forEach( channelKey => {
-          const contact: TrustedContact = existingContacts[ channelKey ]
-          const instream = useStreamFromContact( contact, walletId, true )
-          if( contact.isActive && !instream )
-            channelSyncUpdates.push( {
+      Object.keys(existingContacts).forEach(channelKey => {
+        const contact: TrustedContact = existingContacts[channelKey]
+        if (contact.isActive) {
+          if (metaSync || contact.hasNewData || hardSync)
+            channelSyncUpdates.push({
               channelKey: channelKey,
               streamId,
-            } )
-        } )
-        break
+              metaSync
+            })
+        }
+      })
+      break
+
+    case PermanentChannelsSyncKind.NON_FINALIZED_CONTACTS:
+      if (!Object.keys(existingContacts).length) {
+        yield put(existingPermanentChannelsSynched({
+          successful: true
+        }))
+        return
+      }
+
+      Object.keys(existingContacts).forEach(channelKey => {
+        const contact: TrustedContact = existingContacts[channelKey]
+        const instream = useStreamFromContact(contact, walletId, true)
+        if (contact.isActive && !instream)
+          channelSyncUpdates.push({
+            channelKey: channelKey,
+            streamId,
+          })
+      })
+      break
   }
 
-  if( !channelSyncUpdates.length ) {
-    console.log( 'Exiting sync: no channels to update' )
+  if (!channelSyncUpdates.length) {
+    console.log('Exiting sync: no channels to update')
     return
   }
 
@@ -251,66 +252,66 @@ function* syncPermanentChannelsWorker( { payload }: {payload: { permanentChannel
     channelSyncUpdates
   )
 
-  if ( res.status === 200 ) {
-    const { shouldNotUpdateSERVICES }  = payload
-    if( shouldNotUpdateSERVICES ){
-      if( flowKind === InitTrustedContactFlowKind.REJECT_TRUSTED_CONTACT ){
-        const temporaryContact = trustedContacts.tc.trustedContacts[ contactIdentifier ] // temporary trusted contact object
-        const instream = useStreamFromContact( temporaryContact, walletId, true )
-        console.log( {
+  if (res.status === 200) {
+    const { shouldNotUpdateSERVICES } = payload
+    if (shouldNotUpdateSERVICES) {
+      if (flowKind === InitTrustedContactFlowKind.REJECT_TRUSTED_CONTACT) {
+        const temporaryContact = trustedContacts.tc.trustedContacts[contactIdentifier] // temporary trusted contact object
+        const instream = useStreamFromContact(temporaryContact, walletId, true)
+        console.log({
           temporaryContact, instream
-        } )
-        const fcmToken: string = idx( instream, ( _ ) => _.primaryData.FCM )
-        if( fcmToken ){
+        })
+        const fcmToken: string = idx(instream, (_) => _.primaryData.FCM)
+        if (fcmToken) {
           //TODO: send rejection notification
         }
       }
       return
     }
 
-    const SERVICES  = payload.updatedSERVICES? payload.updatedSERVICES: yield select( ( state ) => state.storage.database.SERVICES )
+    const SERVICES = payload.updatedSERVICES ? payload.updatedSERVICES : yield select((state) => state.storage.database.SERVICES)
     const updatedSERVICES: ServicesJSON = {
       ...SERVICES,
-      TRUSTED_CONTACTS: JSON.stringify( trustedContacts ),
+      TRUSTED_CONTACTS: JSON.stringify(trustedContacts),
     }
 
-    yield call( insertDBWorker, {
+    yield call(insertDBWorker, {
       payload: {
         SERVICES: updatedSERVICES
       }
-    } )
+    })
 
-    if( permanentChannelsSyncKind === PermanentChannelsSyncKind.SUPPLIED_CONTACTS && flowKind === InitTrustedContactFlowKind.APPROVE_TRUSTED_CONTACT ){
-      const contact: TrustedContact = trustedContacts.tc.trustedContacts[ contactIdentifier ]
-      const instream: UnecryptedStreamData = useStreamFromContact( contact, walletId, true )
-      const fcmToken: string = idx( instream, ( _ ) => _.primaryData.FCM )
-      const relationType: TrustedContactRelationTypes = idx( instream, ( _ ) => _.primaryData.relationType )
+    if (permanentChannelsSyncKind === PermanentChannelsSyncKind.SUPPLIED_CONTACTS && flowKind === InitTrustedContactFlowKind.APPROVE_TRUSTED_CONTACT) {
+      const contact: TrustedContact = trustedContacts.tc.trustedContacts[contactIdentifier]
+      const instream: UnecryptedStreamData = useStreamFromContact(contact, walletId, true)
+      const fcmToken: string = idx(instream, (_) => _.primaryData.FCM)
+      const relationType: TrustedContactRelationTypes = idx(instream, (_) => _.primaryData.relationType)
 
-      if( fcmToken ){
+      if (fcmToken) {
         //TODO: send approval notification
       }
-      if( relationType === TrustedContactRelationTypes.KEEPER )
-        Toast( 'You have been successfully added as a Keeper' )
-      else if ( relationType === TrustedContactRelationTypes.CONTACT )
-        Toast( 'Contact successfully added to Friends and Family' )
+      if (relationType === TrustedContactRelationTypes.KEEPER)
+        Toast('You have been successfully added as a Keeper')
+      else if (relationType === TrustedContactRelationTypes.CONTACT)
+        Toast('Contact successfully added to Friends and Family')
     }
 
-    if( [ PermanentChannelsSyncKind.EXISTING_CONTACTS,  PermanentChannelsSyncKind.NON_FINALIZED_CONTACTS ].includes( permanentChannelsSyncKind ) )
-      yield put ( existingPermanentChannelsSynched( {
+    if ([PermanentChannelsSyncKind.EXISTING_CONTACTS, PermanentChannelsSyncKind.NON_FINALIZED_CONTACTS].includes(permanentChannelsSyncKind))
+      yield put(existingPermanentChannelsSynched({
         successful: true
-      } ) )
+      }))
   } else {
-    console.log( {
+    console.log({
       err: res.err
-    } )
+    })
 
-    if( permanentChannelsSyncKind === PermanentChannelsSyncKind.SUPPLIED_CONTACTS && flowKind === InitTrustedContactFlowKind.APPROVE_TRUSTED_CONTACT )
-      Toast( 'Failed to add Keeper/Contact' )
+    if (permanentChannelsSyncKind === PermanentChannelsSyncKind.SUPPLIED_CONTACTS && flowKind === InitTrustedContactFlowKind.APPROVE_TRUSTED_CONTACT)
+      Toast('Failed to add Keeper/Contact')
 
-    if( [ PermanentChannelsSyncKind.EXISTING_CONTACTS,  PermanentChannelsSyncKind.NON_FINALIZED_CONTACTS ].includes( permanentChannelsSyncKind ) )
-      yield put ( existingPermanentChannelsSynched( {
+    if ([PermanentChannelsSyncKind.EXISTING_CONTACTS, PermanentChannelsSyncKind.NON_FINALIZED_CONTACTS].includes(permanentChannelsSyncKind))
+      yield put(existingPermanentChannelsSynched({
         successful: false
-      } ) )
+      }))
   }
 }
 
@@ -319,9 +320,9 @@ export const syncPermanentChannelsWatcher = createWatcher(
   SYNC_PERMANENT_CHANNELS,
 )
 
-function* initializeTrustedContactWorker( { payload } : {payload: {contact: any, flowKind: InitTrustedContactFlowKind, isKeeper?: boolean, channelKey?: string, contactsSecondaryChannelKey?: string, shareId?: string}} ) {
+function* editTrustedContactWorker({ payload }: { payload: { contact: any, flowKind: InitTrustedContactFlowKind, isKeeper?: boolean, channelKey?: string, contactsSecondaryChannelKey?: string, shareId?: string } }) {
   const accountShells: AccountShell[] = yield select(
-    ( state ) => state.accounts.accountShells,
+    (state) => state.accounts.accountShells,
   )
   const { contact, flowKind, isKeeper, channelKey, contactsSecondaryChannelKey, shareId } = payload
 
@@ -338,29 +339,75 @@ function* initializeTrustedContactWorker( { payload } : {payload: {contact: any,
     contactsSecondaryChannelKey
   }
 
-  if( isKeeper ) {
+  if (isKeeper) {
     const channelAssets: ChannelAssets = yield select(
-      ( state ) => state.health.channelAssets,
+      (state) => state.health.channelAssets,
     )
-    if( channelAssets.shareId == shareId ) delete channelAssets[ 'shareId' ]
+    if (channelAssets.shareId == shareId) delete channelAssets['shareId']
     // TODO: prepare channel assets and plug into contactInfo obj
     contactInfo.isKeeper = isKeeper
     contactInfo.channelAssets = channelAssets
   }
 
   let parentShell: AccountShell
-  accountShells.forEach( ( shell: AccountShell ) => {
-    if( !shell.primarySubAccount.instanceNumber ){
-      if( shell.primarySubAccount.sourceKind === REGULAR_ACCOUNT ) parentShell = shell
+  accountShells.forEach((shell: AccountShell) => {
+    if (!shell.primarySubAccount.instanceNumber) {
+      if (shell.primarySubAccount.sourceKind === REGULAR_ACCOUNT) parentShell = shell
     }
-  } )
-  const newSecondarySubAccount = new TrustedContactsSubAccountInfo( {
+  })
+  const newSecondarySubAccount = new TrustedContactsSubAccountInfo({
     accountShellID: parentShell.id,
-    isTFAEnabled: parentShell.primarySubAccount.sourceKind === SourceAccountKind.SECURE_ACCOUNT? true: false,
-  } )
+    isTFAEnabled: parentShell.primarySubAccount.sourceKind === SourceAccountKind.SECURE_ACCOUNT ? true : false,
+  })
 
   yield put(
-    addNewSecondarySubAccount( newSecondarySubAccount, parentShell, contactInfo ),
+    addNewSecondarySubAccount(newSecondarySubAccount, parentShell, contactInfo),
+  )
+}
+
+
+function* initializeTrustedContactWorker({ payload }: { payload: { contact: any, flowKind: InitTrustedContactFlowKind, isKeeper?: boolean, channelKey?: string, contactsSecondaryChannelKey?: string, shareId?: string } }) {
+  const accountShells: AccountShell[] = yield select(
+    (state) => state.accounts.accountShells,
+  )
+  const { contact, flowKind, isKeeper, channelKey, contactsSecondaryChannelKey, shareId } = payload
+
+  const contactDetails: ContactDetails = {
+    id: contact.id,
+    contactName: contact.name,
+    image: contact.image
+  }
+
+  const contactInfo: ContactInfo = {
+    contactDetails,
+    flowKind,
+    channelKey,
+    contactsSecondaryChannelKey
+  }
+
+  if (isKeeper) {
+    const channelAssets: ChannelAssets = yield select(
+      (state) => state.health.channelAssets,
+    )
+    if (channelAssets.shareId == shareId) delete channelAssets['shareId']
+    // TODO: prepare channel assets and plug into contactInfo obj
+    contactInfo.isKeeper = isKeeper
+    contactInfo.channelAssets = channelAssets
+  }
+
+  let parentShell: AccountShell
+  accountShells.forEach((shell: AccountShell) => {
+    if (!shell.primarySubAccount.instanceNumber) {
+      if (shell.primarySubAccount.sourceKind === REGULAR_ACCOUNT) parentShell = shell
+    }
+  })
+  const newSecondarySubAccount = new TrustedContactsSubAccountInfo({
+    accountShellID: parentShell.id,
+    isTFAEnabled: parentShell.primarySubAccount.sourceKind === SourceAccountKind.SECURE_ACCOUNT ? true : false,
+  })
+
+  yield put(
+    addNewSecondarySubAccount(newSecondarySubAccount, parentShell, contactInfo),
   )
 }
 
@@ -369,17 +416,22 @@ export const initializeTrustedContactWatcher = createWatcher(
   INITIALIZE_TRUSTED_CONTACT,
 )
 
-function* rejectTrustedContactWorker( { payload }: { payload: { channelKey: string }} ) {
-  const accountsState: AccountsState = yield select( state => state.accounts )
-  const regularAccount: RegularAccount = accountsState[ REGULAR_ACCOUNT ].service
+export const editTrustedContactWatcher = createWatcher(
+  editTrustedContactWorker,
+  EDIT_TRUSTED_CONTACT,
+)
+
+function* rejectTrustedContactWorker({ payload }: { payload: { channelKey: string } }) {
+  const accountsState: AccountsState = yield select(state => state.accounts)
+  const regularAccount: RegularAccount = accountsState[REGULAR_ACCOUNT].service
   const { walletId } = regularAccount.hdWallet.getWalletId()
 
   const { channelKey } = payload
 
   const streamUpdates: UnecryptedStreamData = {
-    streamId: TrustedContacts.getStreamId( walletId ),
+    streamId: TrustedContacts.getStreamId(walletId),
     metaData: {
-      flags:{
+      flags: {
         active: false,
         newData: false,
         lastSeen: Date.now(),
@@ -397,15 +449,15 @@ function* rejectTrustedContactWorker( { payload }: { payload: { channelKey: stri
     flowKind: InitTrustedContactFlowKind.REJECT_TRUSTED_CONTACT
   }
 
-  const channelUpdate =  {
+  const channelUpdate = {
     contactInfo, streamUpdates
   }
 
-  yield put( syncPermanentChannels( {
+  yield put(syncPermanentChannels({
     permanentChannelsSyncKind: PermanentChannelsSyncKind.SUPPLIED_CONTACTS,
-    channelUpdates: [ channelUpdate ],
+    channelUpdates: [channelUpdate],
     shouldNotUpdateSERVICES: true
-  } ) )
+  }))
 }
 
 export const rejectTrustedContactWatcher = createWatcher(
@@ -413,24 +465,24 @@ export const rejectTrustedContactWatcher = createWatcher(
   REJECT_TRUSTED_CONTACT,
 )
 
-function* removeTrustedContactWorker( { payload }: { payload: { channelKey: string }} ) {
+function* removeTrustedContactWorker({ payload }: { payload: { channelKey: string } }) {
   const trustedContactsService: TrustedContactsService = yield select(
-    ( state ) => state.trustedContacts.service,
+    (state) => state.trustedContacts.service,
   )
-  const accountsState: AccountsState = yield select( state => state.accounts )
-  const regularAccount: RegularAccount = accountsState[ REGULAR_ACCOUNT ].service
+  const accountsState: AccountsState = yield select(state => state.accounts)
+  const regularAccount: RegularAccount = accountsState[REGULAR_ACCOUNT].service
   const { walletId } = regularAccount.hdWallet.getWalletId()
 
   const { channelKey } = payload
-  const contact: TrustedContact = trustedContactsService.tc.trustedContacts[ channelKey ]
-  if( !contact.isActive ) return // already removed
+  const contact: TrustedContact = trustedContactsService.tc.trustedContacts[channelKey]
+  if (!contact.isActive) return // already removed
 
   const streamUpdates: UnecryptedStreamData = {
-    streamId: TrustedContacts.getStreamId( walletId ),
+    streamId: TrustedContacts.getStreamId(walletId),
     secondaryData: null,
     backupData: null,
     metaData: {
-      flags:{
+      flags: {
         active: false,
         newData: false,
         lastSeen: Date.now(),
@@ -442,14 +494,14 @@ function* removeTrustedContactWorker( { payload }: { payload: { channelKey: stri
     channelKey: channelKey,
   }
 
-  const channelUpdate =  {
+  const channelUpdate = {
     contactInfo, streamUpdates
   }
 
-  yield put( syncPermanentChannels( {
+  yield put(syncPermanentChannels({
     permanentChannelsSyncKind: PermanentChannelsSyncKind.SUPPLIED_CONTACTS,
-    channelUpdates: [ channelUpdate ]
-  } ) )
+    channelUpdates: [channelUpdate]
+  }))
 
   // TODO: Send remove notification
   // const notification: INotification = {
@@ -469,20 +521,20 @@ export const removeTrustedContactWatcher = createWatcher(
   REMOVE_TRUSTED_CONTACT,
 )
 
-function* walletCheckInWorker( { payload } ) {
+function* walletCheckInWorker({ payload }) {
   // syncs exchange and fee rates
-  const accountsState: AccountsState = yield select( state => state.accounts )
-  const regularAccount: RegularAccount = accountsState[ REGULAR_ACCOUNT ].service
+  const accountsState: AccountsState = yield select(state => state.accounts)
+  const regularAccount: RegularAccount = accountsState[REGULAR_ACCOUNT].service
   const { walletId } = regularAccount.hdWallet.getWalletId()
 
   const storedExchangeRates = yield select(
-    ( state ) => state.accounts.exchangeRates,
+    (state) => state.accounts.exchangeRates,
   )
   const storedAverageTxFees = yield select(
-    ( state ) => state.accounts.averageTxFees,
+    (state) => state.accounts.averageTxFees,
   )
 
-  try{
+  try {
     const { currencyCode } = payload
     const res = yield call(
       RelayServices.walletCheckIn,
@@ -490,25 +542,25 @@ function* walletCheckInWorker( { payload } ) {
       currencyCode
     )
 
-    if ( res.status === 200 ) {
+    if (res.status === 200) {
       const { exchangeRates, averageTxFees } = res.data
-      if ( !exchangeRates ) yield put( exchangeRatesCalculated( {
-      } ) )
+      if (!exchangeRates) yield put(exchangeRatesCalculated({
+      }))
       else {
-        if ( JSON.stringify( exchangeRates ) !== JSON.stringify( storedExchangeRates ) )
-          yield put( exchangeRatesCalculated( exchangeRates ) )
+        if (JSON.stringify(exchangeRates) !== JSON.stringify(storedExchangeRates))
+          yield put(exchangeRatesCalculated(exchangeRates))
       }
 
-      if ( !averageTxFees ) console.log( 'Failed to fetch fee rates' )
+      if (!averageTxFees) console.log('Failed to fetch fee rates')
       else {
-        if ( JSON.stringify( averageTxFees ) !== JSON.stringify( storedAverageTxFees ) )
-          yield put( setAverageTxFee( averageTxFees ) )
+        if (JSON.stringify(averageTxFees) !== JSON.stringify(storedAverageTxFees))
+          yield put(setAverageTxFee(averageTxFees))
       }
     } else {
-      console.log( 'Check-In failed', res.err )
+      console.log('Check-In failed', res.err)
     }
-  } catch( err ){
-    console.log( 'Wallet Check-In failed w/ the following err: ', err )
+  } catch (err) {
+    console.log('Wallet Check-In failed w/ the following err: ', err)
   }
 }
 
