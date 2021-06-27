@@ -44,7 +44,7 @@ import CloudBackupStatus from '../common/data/enums/CloudBackupStatus'
 // only admit lowercase letters and digits
 const ALLOWED_CHARACTERS_REGEXP = /^[0-9a-z]+$/
 let messageIndex = 0
-const LOADER_MESSAGE_TIME = 2000
+const LOADER_MESSAGE_TIME = 100
 const loaderMessages = [
   {
     heading: 'Bootstrapping Accounts',

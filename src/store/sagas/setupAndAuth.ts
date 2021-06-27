@@ -30,6 +30,7 @@ import dbManager from '../../storage/realm/dbManager'
 // import { timer } from '../../utils'
 
 function* setupWalletWorker( { payload } ) {
+  console.log( '***-> STARTED wallet setup saga' )
   const { walletName, security } = payload
 
   // const { regularAcc, testAcc, secureAcc, s3Service, trustedContacts, keepersInfo } = yield call( serviceGeneratorForNewBHR )
@@ -82,7 +83,7 @@ function* setupWalletWorker( { payload } ) {
   // initialize health-check schema on relay
   yield put( initializeHealthSetup() )
   yield put( completedWalletSetup( ) )
-
+  console.log( '***-> COMPLETED wallet setup saga' )
   // Post Hydration activities
   // saturate the test account w/ 10K sats
   // yield put( getTestcoins() )

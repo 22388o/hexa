@@ -92,6 +92,7 @@ function* fetchDBWorker() {
 export const fetchDBWatcher = createWatcher( fetchDBWorker, FETCH_FROM_DB )
 
 export function* insertDBWorker( { payload } ) {
+  console.log( '***-> Started' )
   try {
     const storage = yield select( ( state ) => state.storage )
     const { database, insertedIntoDB, key } = storage
@@ -124,6 +125,7 @@ export function* insertDBWorker( { payload } ) {
         database: updatedDB,
       },
     } )
+    console.log( '***-> Completed' )
   } catch ( err ) {
     console.log( err )
   }

@@ -240,9 +240,9 @@ export const initializeWallet = async (): Promise <{
   const primaryMnemonic = bip39.generateMnemonic( 256 )
   const primarySeed = bip39.mnemonicToSeedSync( primaryMnemonic )
   const walletId = crypto.createHash( 'sha256' ).update( primarySeed ).digest( 'hex' )
-  const secondaryMemonic = bip39.generateMnemonic( 256 )
-  const secondarySeed = bip39.mnemonicToSeedSync( secondaryMemonic )
-  const secondaryWalletId = crypto.createHash( 'sha256' ).update( secondarySeed ).digest( 'hex' )
+  // const secondaryMemonic = bip39.generateMnemonic( 256 )
+  // const secondarySeed = bip39.mnemonicToSeedSync( secondaryMemonic )
+  // const secondaryWalletId = crypto.createHash( 'sha256' ).update( secondarySeed ).digest( 'hex' )
 
   const initInstanceNumber = 0
   const testDerivationPath = 'm/49\'/1\'/0\''
@@ -270,45 +270,45 @@ export const initializeWallet = async (): Promise <{
     networkType: config.APP_STAGE === APP_STAGE.DEVELOPMENT? NetworkType.TESTNET: NetworkType.MAINNET,
   } )
 
-  const { setupData } = await AccountUtilities.registerTwoFA( walletId, secondaryWalletId )
-  const secondaryXpub = AccountUtilities.generateExtendedKey( secondaryMemonic, false, bitcoinJS.networks.testnet, rootDerivationPath )
-  const bithyveXpub = setupData.bhXpub
-  const twoFAKey = setupData.secret
+  // const { setupData } = await AccountUtilities.registerTwoFA( walletId, secondaryWalletId )
+  // const secondaryXpub = AccountUtilities.generateExtendedKey( secondaryMemonic, false, bitcoinJS.networks.testnet, rootDerivationPath )
+  // const bithyveXpub = setupData.bhXpub
+  // const twoFAKey = setupData.secret
 
   const savingsDerivationPath = 'm/49\'/0\'/11\''
-  const savingsAccount: MultiSigAccount = generateMultiSigAccount( {
-    walletId,
-    type: AccountType.SAVINGS_ACCOUNT,
-    instanceNum: initInstanceNumber,
-    accountName: 'Savings Account',
-    accountDescription: 'Multi-factor security',
-    mnemonic: primaryMnemonic,
-    derivationPath: savingsDerivationPath,
-    secondaryXpub,
-    bithyveXpub,
-    networkType: config.APP_STAGE === APP_STAGE.DEVELOPMENT? NetworkType.TESTNET: NetworkType.MAINNET,
-  } )
+  // const savingsAccount: MultiSigAccount = generateMultiSigAccount( {
+  //   walletId,
+  //   type: AccountType.SAVINGS_ACCOUNT,
+  //   instanceNum: initInstanceNumber,
+  //   accountName: 'Savings Account',
+  //   accountDescription: 'Multi-factor security',
+  //   mnemonic: primaryMnemonic,
+  //   derivationPath: savingsDerivationPath,
+  //   secondaryXpub,
+  //   bithyveXpub,
+  //   networkType: config.APP_STAGE === APP_STAGE.DEVELOPMENT? NetworkType.TESTNET: NetworkType.MAINNET,
+  // } )
 
   const wallet: Wallet = {
     walletId,
     primaryMnemonic,
-    secondaryMemonic,
+    secondaryMemonic: 'as asd asdf as as ',
     details2FA: {
-      secondaryXpub,
-      bithyveXpub,
-      twoFAKey
+      secondaryXpub: '',
+      bithyveXpub: '',
+      twoFAKey: ''
     },
     accounts: {
       [ testDerivationPath ]: testAccount.id,
       [ checkingDerivationPath ]: checkingAccount.id,
-      [ savingsDerivationPath ]: savingsAccount.id
+      [ savingsDerivationPath ]: '0'
     }
   }
 
   const accounts: Accounts = {
     [ testAccount.id ]: testAccount,
     [ checkingAccount.id ]: checkingAccount,
-    [ savingsAccount.id ]: savingsAccount,
+    [ 0 ]: checkingAccount,
   }
 
   // Share generation
