@@ -803,6 +803,7 @@ function* updateAccountSettingsWorker( { payload }: {
       }
     } ) )
     yield call( dbManager.updateAccount, account.id, account )
+    yield put( updateWalletImageHealth() )
     if( visibility === AccountVisibility.DEFAULT ) {
       yield put( accountSettingsUpdated() )
     }
