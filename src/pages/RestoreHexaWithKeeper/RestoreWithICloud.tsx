@@ -67,7 +67,7 @@ import { textWithoutEncoding, email } from 'react-native-communications'
 import ContactListForRestore from './ContactListForRestore'
 import SendViaLink from '../../components/SendViaLink'
 import ShareOtpWithTrustedContact from '../NewBHR/ShareOtpWithTrustedContact'
-import { getCloudDataRecovery, clearCloudCache, setCloudBackupStatus } from '../../store/actions/cloud'
+import { getCloudDataRecovery, clearCloudCache, setCloudBackupStatus, setCloudErrorMessage } from '../../store/actions/cloud'
 import CloudBackupStatus from '../../common/data/enums/CloudBackupStatus'
 import { setVersion } from '../../store/actions/versionHistory'
 import QuestionList from '../../common/QuestionList'
@@ -153,6 +153,8 @@ interface RestoreWithICloudStateTypes {
   backupModal: boolean;
   restoreSuccess: boolean;
   currentLevel: number;
+  errorModalTitle: string,
+  errorModalInfo: string,
 }
 
 interface RestoreWithICloudPropsTypes {
@@ -191,6 +193,8 @@ interface RestoreWithICloudPropsTypes {
   keeperInfo: KeeperInfoInterface[];
   setupHealth: any;
   wallet: Wallet;
+  cloudErrorMessage: string,
+  setCloudErrorMessage: any,
 }
 
 class RestoreWithICloud extends Component<
@@ -295,15 +299,29 @@ class RestoreWithICloud extends Component<
       this.getData( cloudData )
     }
 
-    if ( prevProps.cloudBackupStatus !== cloudBackupStatus && cloudBackupStatus === CloudBackupStatus.FAILED ) {
+    // if ( prevProps.cloudErrorMessage !== cloudErrorMessage ) {
+    //   this.setState( {
+    //     showLoader: false,
+    //   } )
+    //   this.showCloudRestoreError( )
+    // }
+    // if ( prevProps.cloudBackupStatus !== cloudBackupStatus && cloudBackupStatus === CloudBackupStatus.FAILED ) {
+    //   console.log( 'CHNAHGE' )
+    //   this.setState( ( state ) => ( {
+    //     showLoader: false,
+    //   } ) )
+    //   this.showCloudRestoreError( )
+    //   this.props.setCloudBackupStatus( CloudBackupStatus.PENDING )
+
+    // }
+    if ( prevProps.cloudErrorMessage !==  this.props.cloudErrorMessage ) {
       this.setState( ( state ) => ( {
         showLoader: false,
+        backupModal: false
       } ) )
+      this.showCloudRestoreError( )
       this.props.setCloudBackupStatus( CloudBackupStatus.PENDING )
       // ( this.BackupNotFound as any ).current.snapTo( 1 )
-      this.setState( {
-        backupModal: true
-      } )
     }
     if ( SERVICES && prevProps.walletImageChecked !== walletImageChecked ) {
       await AsyncStorage.setItem( 'walletExists', 'true' )
@@ -382,6 +400,20 @@ class RestoreWithICloud extends Component<
     // }
   };
 
+  showCloudRestoreError = () => {
+    if( this.props.cloudErrorMessage !== '' ) {
+      setTimeout( () => {
+        this.setState( {
+          errorModal: true,
+          errorModalTitle: 'Cloud Restore failed',
+          errorModalInfo: this.props.cloudErrorMessage,
+        }, () => {
+          this.props.setCloudErrorMessage( '' )
+        } )
+      }, 500 )
+    }
+  }
+
   componentWillUnmount = () => {
     this.props.clearCloudCache()
   }
@@ -438,23 +470,24 @@ class RestoreWithICloud extends Component<
       const newArray = []
       try {
         arr = JSON.parse( result )
-      } catch ( error ) {
-        //console.log('ERROR', error);
-      }
-      if ( arr && arr.length ) {
-        for ( let i = 0; i < arr.length; i++ ) {
-          newArray.push( arr[ i ] )
+        if ( arr && arr.length ) {
+          for ( let i = 0; i < arr.length; i++ ) {
+            newArray.push( arr[ i ] )
+          }
         }
+        this.setState( ( state ) => ( {
+          selectedBackup: newArray[ 0 ],
+          walletsArray: newArray,
+          showLoader: false,
+        } ) )
+        // ( this.RestoreFromICloud as any ).current.snapTo( 1 )
+        this.setState( {
+          restoreModal: true
+        } )
+      } catch ( error ) {
+        console.log( 'ERROR', error )
       }
-      this.setState( ( state ) => ( {
-        selectedBackup: newArray[ 0 ],
-        walletsArray: newArray,
-        showLoader: false,
-      } ) )
-      // ( this.RestoreFromICloud as any ).current.snapTo( 1 )
-      this.setState( {
-        restoreModal: true
-      } )
+
     } else {
       this.setState( ( state ) => ( {
         showLoader: false,
@@ -573,7 +606,9 @@ class RestoreWithICloud extends Component<
       } else {
         // ( this.ErrorBottomSheet as any ).current.snapTo( 1 )
         this.setState( {
-          errorModal: true
+          errorModal: true,
+          errorModalTitle: 'Error receiving Recovery Key',
+          errorModalInfo: 'There was an error while receiving your Recovery Key, please try again',
         } )
       }
     }
@@ -832,9 +867,9 @@ class RestoreWithICloud extends Component<
           'Clicking on Recover would source your Recovery Key from iCloud'
         }
         cardInfo={'Restoring Wallet from'}
-        cardTitle={selectedBackup.walletName}
+        cardTitle={selectedBackup && selectedBackup.walletName ? selectedBackup.walletName : ''}
         levelStatus={
-          `${selectedBackup.levelStatus
+          `${selectedBackup && selectedBackup.levelStatus
             ? `${Platform.OS == 'ios'  ? 'iCloud' : 'GDrive'} backup at Level ${selectedBackup.levelStatus}`
             : ''}`
         }
@@ -1277,13 +1312,14 @@ class RestoreWithICloud extends Component<
         <ModalContainer visible={errorModal} closeBottomSheet={() => { }}>
           <ErrorModalContents
             modalRef={this.ErrorBottomSheet}
-            title={'Error receiving Recovery Key'}
-            info={
-              'There was an error while receiving your Recovery Key, please try again'
-            }
+            title={this.state.errorModalTitle}
+            info={this.state.errorModalInfo}
             proceedButtonText={'Try again'}
             onPressProceed={() => {
               // ( this.ErrorBottomSheet as any ).current.snapTo( 0 )
+              if( this.state.errorModalTitle === 'Cloud Restore failed' ) {
+                this.cloudData()
+              }
               this.setState( {
                 errorModal: false
               } )
@@ -1388,6 +1424,7 @@ const mapStateToProps = ( state ) => {
     downloadedBackupData: idx( state, ( _ ) => _.bhr.downloadedBackupData ),
     keeperInfo: idx( state, ( _ ) => _.bhr.keeperInfo ),
     wallet: idx( state, ( _ ) => _.storage.wallet ),
+    cloudErrorMessage: idx( state, ( _ ) => _.cloud.cloudErrorMessage ),
   }
 }
 
@@ -1406,7 +1443,8 @@ export default withNavigationFocus(
     setCloudBackupStatus,
     downloadBackupData,
     putKeeperInfo,
-    setupHealth
+    setupHealth,
+    setCloudErrorMessage,
   } )( RestoreWithICloud )
 )
 
