@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { DeepLinkEncryptionType, DeepLinkKind, LevelHealthInterface, LevelInfo, NewWalletImage, QRCodeTypes, TrustedContact, TrustedContactRelationTypes } from '../../bitcoin/utilities/Interface'
+import { DeepLinkEncryptionType, DeepLinkKind, ShortLinkKind, LevelHealthInterface, LevelInfo, NewWalletImage, QRCodeTypes, TrustedContact, TrustedContactRelationTypes } from '../../bitcoin/utilities/Interface'
 import { encrypt } from '../encryption'
 import DeviceInfo from 'react-native-device-info'
 import config from '../../bitcoin/HexaConfig'
@@ -9,6 +9,7 @@ import Toast from '../../components/Toast'
 import BHROperations from '../../bitcoin/utilities/BHROperations'
 import crypto from 'crypto'
 import { getVersions } from '../utilities'
+import dynamicLinks from '@react-native-firebase/dynamic-links'
 
 export const nameToInitials = fullName => {
   if( !fullName ) return
@@ -323,7 +324,7 @@ export const getLevelInfo = ( levelHealthVar: LevelHealthInterface[], currentLev
   return levelHealthVar[ currentLevel - 1 ].levelInfo
 }
 
-export const generateDeepLink = ( encryptionType: DeepLinkEncryptionType, encryptionKey: string, correspondingTrustedContact: TrustedContact, walletName: string ) => {
+export const generateDeepLink = async ( encryptionType: DeepLinkEncryptionType, encryptionKey: string, correspondingTrustedContact: TrustedContact, walletName: string ) => {
   const keysToEncrypt = correspondingTrustedContact.channelKey + '-' + ( correspondingTrustedContact.secondaryChannelKey ? correspondingTrustedContact.secondaryChannelKey : '' )
   let encryptedChannelKeys: string
   let encryptionHint: string
@@ -378,9 +379,56 @@ export const generateDeepLink = ( encryptionType: DeepLinkEncryptionType, encryp
       `/${encryptionType}-${encryptionHint}` +
       `/v${appVersion}`
 
-  return {
-    deepLink, encryptedChannelKeys, encryptionType, encryptionHint
+  let shortLinkKind = ''
+
+  switch( deepLinkKind ){
+      case DeepLinkKind.CONTACT:
+        shortLinkKind = ShortLinkKind.CONTACT
+        break
+      case DeepLinkKind.KEEPER:
+        shortLinkKind = ShortLinkKind.KEEPER
+        break
+      case DeepLinkKind.PRIMARY_KEEPER:
+        shortLinkKind = ShortLinkKind.KEEPER
+      case DeepLinkKind.RECIPROCAL_KEEPER:
+        shortLinkKind = ShortLinkKind.KEEPER
+      case DeepLinkKind.EXISTING_CONTACT:
+        shortLinkKind = ShortLinkKind.KEEPER
+        break
+      default:
+        shortLinkKind = ''
+        break
   }
+  const url = deepLink.replace( /\s+/g, '' )
+  try {
+    const uriPrefix = 'https://hexawallet.page.link'
+    console.log( uriPrefix )
+    const shortLink = await dynamicLinks().buildShortLink( {
+      link: url,
+      domainUriPrefix: uriPrefix,
+      android: {
+        packageName: 'io.hexawallet.hexa.development',
+        fallbackUrl: url,
+      },
+      navigation: {
+        forcedRedirectEnabled: false
+      }
+    }, dynamicLinks.ShortLinkType.SHORT )
+    return {
+      deepLink, encryptedChannelKeys, encryptionType, encryptionHint, shortLink: shortLink .replace( /\s+/g, '' )
+    }
+  } catch ( error ) {
+    console.log( error )
+
+    return {
+      deepLink, encryptedChannelKeys, encryptionType, encryptionHint, shortLink: ''
+    }
+  }
+
+}
+
+const shortLink =async ( deepLink ) => {
+
 }
 
 export const processDeepLink = async ( deepLink: string ) =>{

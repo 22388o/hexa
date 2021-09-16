@@ -919,6 +919,16 @@ export enum DeepLinkKind {
   EXISTING_CONTACT = 'EXISTING_CONTACT'
 }
 
+export enum ShortLinkKind {
+  CONTACT = 'request',
+  KEEPER = 'keeper',
+  PRIMARY_KEEPER = 'keeper',
+  RECIPROCAL_KEEPER = 'keeper',
+  EXISTING_CONTACT = 'request',
+  GIFT = 'gift',
+  DONATION = 'donation'
+}
+
 export enum DeepLinkEncryptionType {
   DEFAULT = 'DEFAULT',
   NUMBER = 'NUM',
