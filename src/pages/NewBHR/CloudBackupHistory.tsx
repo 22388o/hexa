@@ -1,20 +1,16 @@
 import React, { useState, useEffect, useCallback, createRef } from 'react'
 import {
   View,
-  StyleSheet,
   SafeAreaView,
   StatusBar,
   Platform,
-  Keyboard,
 } from 'react-native'
-import Fonts from '../../common/Fonts'
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen'
 import { useDispatch } from 'react-redux'
 import Colors from '../../common/Colors'
-import { RFValue } from 'react-native-responsive-fontsize'
 import moment from 'moment'
 import _ from 'underscore'
 import HistoryPageComponent from './HistoryPageComponent'
@@ -25,11 +21,9 @@ import { useSelector } from 'react-redux'
 import HistoryHeaderComponent from './HistoryHeaderComponent'
 import CloudPermissionModalContents from '../../components/CloudPermissionModalContents'
 import CloudBackupStatus from '../../common/data/enums/CloudBackupStatus'
-import { getLevelInfo } from '../../common/CommonFunctions'
 import { updateCloudData, setCloudErrorMessage } from '../../store/actions/cloud'
 import BottomSheet from 'reanimated-bottom-sheet'
 import ModalContainer from '../../components/home/ModalContainer'
-import { LevelHealthInterface } from '../../bitcoin/utilities/Interface'
 import ErrorModalContents from '../../components/ErrorModalContents'
 import { translations } from '../../common/content/LocContext'
 
@@ -46,6 +40,9 @@ export enum BottomSheetState {
 const CloudBackupHistory = ( props ) => {
   const strings  = translations[ 'bhr' ]
   const common  = translations[ 'common' ]
+  const iCloudErrors  = translations[ 'iCloudErrors' ]
+  const driveErrors  = translations[ 'driveErrors' ]
+
   const [ cloudBackupHistory, setCloudBackupHistory ] = useState( [] )
   const [ confirmationModal, setConfirmationModal ] = useState( false )
   const [ errorModal, setErrorModal ] = useState( false )
@@ -87,7 +84,11 @@ const CloudBackupHistory = ( props ) => {
 
   useEffect( () => {
     if ( cloudErrorMessage !== '' ) {
-      setErrorMsg( cloudErrorMessage )
+      const message = Platform.select( {
+        ios: iCloudErrors[ cloudErrorMessage ],
+        android: driveErrors[ cloudErrorMessage ],
+      } )
+      setErrorMsg( message )
       setErrorModal( true )
       dispatch( setCloudErrorMessage( '' ) )
     }
@@ -106,8 +107,8 @@ const CloudBackupHistory = ( props ) => {
         onPressIgnore={()=> {
           setErrorModal( false )
         }}
-        proceedButtonText={'Try Again'}
-        cancelButtonText={'Skip'}
+        proceedButtonText={common.tryAgain}
+        cancelButtonText={common.skip}
         isIgnoreButton={true}
         isBottomImage={true}
         isBottomImageStyle={{
